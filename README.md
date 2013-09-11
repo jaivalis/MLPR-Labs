@@ -1,2 +1,2 @@
-MLPR-Labs
+Machine Learning & Pattern Recognition Labs
 =========
