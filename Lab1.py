@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-#import pylab as pl
+import pylab as pl
 
 # Task 1.1
 def gen_sinusoidal(N):
@@ -42,8 +42,7 @@ def fit_polynomial(x,t,M):
 
 #Task 1.3
 def generateSampleDataSet(N):
-    x = np.linspace(0,2 * np.pi, N)    
-#    sine = np.linspace(0,2 * np.pi)   
+    x = np.linspace(0,2*np.pi, N) 
     retx = []
     rety = []
     for i in x:
@@ -54,17 +53,24 @@ def generateSampleDataSet(N):
     return np.concatenate((retx, rety), axis = 0)
 
 def fit_polynominals() :
-    x = np.linspace(0,2 * np.pi)   
+    x = np.linspace(0,2 * np.pi)
+    
     M = [0, 1, 3, 8]
     sampleData = generateSampleDataSet(9)
     sampleX = sampleData[0]
     sampleY = sampleData[1]
     
-    plt.plot(x, np.sin(x))
-    for m in M:
-        poly = fit_polynomial(sampleX, sampleY, m)  
-        print poly
-        plt.plot(np.poly1d(poly[0]))
+    fig = plt.figure()
+    subplot = 1
+    for m in M:    
+        fig.add_subplot(2,2,subplot)
+        plt.plot(x, np.sin(x))
+        for i in range (0, np.size(sampleX)):
+            plt.plot(sampleX[i], sampleY[i], 'o')
+        poly = fit_polynomial(sampleX, sampleY, m)
+        pol = np.polynomial.Polynomial(poly[0])
+        plt.plot(x, pol(x), 'r')
+        subplot = subplot + 1
     plt.show()
 fit_polynominals()
 
