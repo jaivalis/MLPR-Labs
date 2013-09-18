@@ -6,13 +6,12 @@ import numpy as np
 
 # Task 1.1
 def gen_sinusoidal(N):
-    x = np.linspace (0,2 * np.pi)
-    
-    for i in np.linspace (0, 2*np.pi, N/2 * np.pi):
+    x = np.linspace(0,2 * np.pi, N)   
+    for i in np.linspace (0, 2*np.pi, N):
         plt.plot(i, np.sin(i) + np.random.normal(-0.1, 0.1), 'o')
     plt.plot(x, np.sin(x))
-    
-gen_sinusoidal(10)
+    plt.show()
+#gen_sinusoidal(10)
 
 # Task 1.2
 def fit_polynomial(x,t,M):
@@ -33,16 +32,43 @@ def fit_polynomial(x,t,M):
                 w[i][j]+=pow(x[k],i+j)
                 if(i==0):
                     y[i][j] += t[k]*pow(x[k],j)
-    #print w
-    #print y
     a=np.linalg.inv(w)
-    #print a
     b=np.transpose(y)
     result = np.dot(a,b)
     return np.transpose(result)
-    
-    
-# data to fit
 #x = [0.0,1.0,2,3,4,5]
 #y = [0,0.8,0.9,0.1,-0.8,-1]
 #print (fit_polynomial(x,y,3))
+
+#Task 1.3
+def generateSampleDataSet(N):
+    x = np.linspace(0,2 * np.pi, N)    
+#    sine = np.linspace(0,2 * np.pi)   
+    retx = []
+    rety = []
+    for i in x:
+        retx.append(i)
+        rety.append(np.sin(i) + np.random.normal(-0.1, 0.1))
+    retx = np.array([retx])
+    rety = np.array([rety])
+    return np.concatenate((retx, rety), axis = 0)
+
+def fit_polynominals() :
+    x = np.linspace(0,2 * np.pi)   
+    M = [0, 1, 3, 8]
+    sampleData = generateSampleDataSet(9)
+    sampleX = sampleData[0]
+    sampleY = sampleData[1]
+    
+    plt.plot(x, np.sin(x))
+    for m in M:
+        poly = fit_polynomial(sampleX, sampleY, m)  
+        print poly
+        plt.plot(np.poly1d(poly[0]))
+    plt.show()
+fit_polynominals()
+
+
+
+
+
