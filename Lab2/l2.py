@@ -1,7 +1,6 @@
 import gzip, cPickle
 import numpy as np
 import pylab as plt
-from math import exp, log1p
 
 def load_mnist():
 	f = gzip.open('mnist.pkl.gz', 'rb')
@@ -40,20 +39,20 @@ def logreg_gradient(x, t, W, b): # log_Q -> Z -> log_P -> delta
     partial_derivative_logLikelihood_b = []
     partial_derivative_logLikelihood_W = []
 
-    Z = 0.0 # Z = normalizing factor
+    Z = 0 # Z = normalizing factor
     for j in range(0,10):
         log_q = np.dot(np.transpose(W)[j], x) + b[j]
         log_Q.append(log_q)
-        Z += exp(log_Q[j])
-
-        log_P.append(log_Q[j] - log1p(Z))
+        
+        Z += np.exp(log_q)
+            
+        log_P.append(log_q - np.log(Z))
                 
         if j == t:
-            partial_derivative_logLikelihood_b.append(1 - exp(log_Q[j])/Z)
+            partial_derivative_logLikelihood_b.append(1 - np.exp(log_q)/Z)
         else:
-            partial_derivative_logLikelihood_b.append(exp(log_Q[j])/Z)
-        
-    
+            partial_derivative_logLikelihood_b.append(np.exp(log_q)/Z)
+
     partial_derivative_logLikelihood_W = np.outer(x, partial_derivative_logLikelihood_b)
     
     return partial_derivative_logLikelihood_W, partial_derivative_logLikelihood_b
@@ -83,13 +82,13 @@ def sgd_iter(x_train, t_train, W, b):
 # returns conditional log probability(scalar)
 def get_log_P(x, t, W, b):
     log_Q = []
+    Z = 0
     for i in range(0,10):
         log_q = np.dot(np.transpose(W)[i], x) + b[i]
         log_Q.append(log_q)
-    Z = 0.0
-    for i in range (0, 10): # Z = normalizing factor        
-        Z += exp(log_Q[i])
-    log_p = log_Q[t] - log1p(Z)
+    #for i in range (0, 10):        
+        Z = Z + np.exp(log_Q[i]) # Z = normalizing factor 
+    log_p = log_Q[t] - np.log(Z)
     return log_p
 
 def plot_training(handful, x_train, t_train, x_valid, t_valid):
@@ -97,6 +96,7 @@ def plot_training(handful, x_train, t_train, x_valid, t_valid):
     b = np.zeros(10)
     
     point = 0
+    i = 0
     for i in range(0, handful):
         W = sgd_iter(x_train, t_train, W, b)
     
@@ -104,15 +104,62 @@ def plot_training(handful, x_train, t_train, x_valid, t_valid):
             x = x_valid[xIndex]
             t = t_valid[xIndex]
             log_P = get_log_P(x, t, W, b)
-            if i%1000 == 0:
+            if i%10 == 0:
                 plt.plot(point, log_P, 'o')
             point += 1
+            i += 1
     plt.show()
-    return W
+                
+def plot_training2(handful, x_train, t_train, x_valid, t_valid):
+    W = np.zeros((784,10))
+    b = np.zeros(10)
+    
+    validAverages = []
+    trainAverages = []
+    for i in range(0, handful):
+        W = sgd_iter(x_train, t_train, W, b)
+        print 'Training cycle #', i+1, ' complete.'
+        avgProbValidation = 0
+        for xIndex in range(0, len(x_valid)):
+            x = x_valid[xIndex]
+            t = t_valid[xIndex]
+            log_P = get_log_P(x, t, W, b)
+            avgProbValidation += log_P / len(x_valid)
+#        avgProbValidation /= len(x_valid)
+        print '~Added Validation #', i+1, ' to plot.'
+        
+        avgProbTraining = 0
+        for xIndex in range(0, len(x_train)):
+            x = x_train[xIndex]
+            t = t_train[xIndex]
+            log_P = get_log_P(x, t, W, b)
+            avgProbTraining += log_P / len(x_train)
+#        avgProbTraining /= len(x_train)
+        print '~Added Training #', i+1, ' to plot.'
+        
+        validAverages.append(avgProbValidation)
+        trainAverages.append(avgProbTraining)
+    ind = np.arange(handful)  # the x locations for the groups
+    width = 0.35
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(ind, validAverages, width, color='r')
+    rects2 = ax.bar(ind + width, trainAverages, width, color='y')
+    
+    # add some
+    ax.set_ylabel('Scores')
+    ax.set_title('Scores by group and gender')
+    ax.set_xticks(ind+width)
+    ax.set_xticklabels( ('G1', 'G2', 'G3', 'G4', 'G5') )
+    
+    ax.legend( (rects1[0], rects2[0]), ('Men', 'Women') )
+
+#    autolabel(rects1)
+#    autolabel(rects2)
+
+    plt.show()
     
 def visualize_weights(W):
     plot_digits(W, 5, shape=(28,28))
 
 (x_train, t_train), (x_valid, t_valid), (x_test, t_test) = load_mnist()
-W = plot_training(1, x_train, t_train, x_valid, t_valid)
-visualize_weights(np.transpose(W))
+plot_training2(4, x_train, t_train, x_valid, t_valid)
