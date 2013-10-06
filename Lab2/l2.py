@@ -1,7 +1,8 @@
 import gzip, cPickle
 import numpy as np
 import pylab as plt
-from math import isnan
+from operator import itemgetter
+
 def load_mnist():
 	f = gzip.open('mnist.pkl.gz', 'rb')
 	data = cPickle.load(f)
@@ -17,6 +18,15 @@ def plot_digits(data, numcols, shape=(28,28)):
         plt.imshow(data[i].reshape(shape), interpolation='nearest', cmap='Greys')
     plt.show()
 
+def plot_digits_list(data, numcols, shape=(28,28)):
+    numdigits = len(data)
+    numrows = int(numdigits/numcols)
+    for i in range(numdigits):
+        plt.subplot(numrows, numcols, i)
+        plt.axis('off')
+        plt.imshow(data[i].reshape(shape), interpolation='nearest', cmap='Greys')
+    plt.show()
+    
 def plot_digit(digit) :
     plt.imshow(digit.reshape(28,28), interpolation='nearest', cmap='Greys')
     plt.show()
@@ -91,10 +101,6 @@ def get_log_P(x, t, W, b):
         
         Z = Z + np.exp(log_q) # Z = normalizing factor 
     log_p = log_Q[t] - np.log(Z)
-#    if isnan(log_p):
-#        print log_p
-#        print Z
-#        print log_Q
     return log_p
 
 def plot_training(handful, x_train, t_train, x_valid, t_valid):
@@ -182,7 +188,51 @@ def plot_training2(handful, x_train, t_train, x_valid, t_valid):
 def visualize_weights(W):
     plot_digits(W, 5, shape=(28,28))
 
-(x_train, t_train), (x_valid, t_valid), (x_test, t_test) = load_mnist()
-plot_training(3, x_train, t_train, x_valid, t_valid)
+def task1_2_3():
+    (x_train, t_train), (x_valid, t_valid), (x_test, t_test) = load_mnist()
+    W = np.zeros((10, 784))
+    b = np.zeros(10)
+    tupl = sgd_iter(x_train, t_train, W, b)
+    W = tupl[0]
+    b = tupl[1]
+    
+    visualize8hardest(x_valid, t_valid, W, b)
+    visualize8easiest(x_valid, t_valid, W, b)
+    
+def visualize8hardest(x_valid, t_valid, W, b):
+    log_ps = []
+    hardestDigits = []
+    for xIndex in range(0, len(x_valid)):
+        x = x_valid[xIndex]
+        t = t_valid[xIndex]
+        
+        log_ps.append(get_log_P(x, t, W, b))
+    # find 8 lowest log_ps
+    for i in range (0, 8):
+        index = min(enumerate(log_ps), key=itemgetter(1))[0]
+        log_ps.remove(log_ps[index])
+        hardestDigits.append(x_valid[index])
+    
+    plot_digits_list(hardestDigits, numcols=4)
+    
+def visualize8easiest(x_valid, t_valid, W, b):
+    log_ps = []
+    easiestDigits = []
+    for xIndex in range(0, len(x_valid)):
+        x = x_valid[xIndex]
+        t = t_valid[xIndex]
+        
+        log_ps.append(get_log_P(x, t, W, b))
+    # find 8 lowest log_ps
+    for i in range (0, 8):
+        index = max(enumerate(log_ps), key=itemgetter(1))[0]
+        log_ps.remove(log_ps[index])
+        easiestDigits.append(x_valid[index])
+    
+    plot_digits_list(easiestDigits, numcols=4)
+    
+task1_2_3()
+#(x_train, t_train), (x_valid, t_valid), (x_test, t_test) = load_mnist()
+#plot_training(3, x_train, t_train, x_valid, t_valid)
 
 #train_2_iters_n_viz()
